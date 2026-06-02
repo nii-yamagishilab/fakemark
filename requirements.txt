@@ -1,0 +1,47 @@
+# Core deep learning
+torch
+torchaudio
+
+# Speech processing
+speechbrain
+audioseal
+audiocraft
+speechtokenizer
+vocos
+
+# Hugging Face ecosystem
+transformers
+huggingface-hub
+hyperpyyaml
+
+# Audio processing
+librosa
+pydub
+audiomentations
+julius
+noisereduce
+beartype
+pyworld
+
+# Scientific computing
+numpy<2.0      # thinc 8.1.x wheels were compiled against numpy 1.x
+scipy
+scikit-learn
+
+# Tensor / vision utilities
+einops
+kornia
+
+# Data / config
+pandas
+pyyaml
+tqdm
+tensorboard
+
+# Pinned transitive deps to avoid ABI/compatibility conflicts
+# audiocraft -> spacy 3.5.2 requires thinc<8.2 and pydantic<1.11
+# torch 2.x requires setuptools<82
+spacy==3.5.2
+thinc>=8.1.8,<8.2.0
+pydantic>=1.7.4,<1.11.0
+setuptools<82
