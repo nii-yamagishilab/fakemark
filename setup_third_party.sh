@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # setup_third_party.sh
 #
-# Downloads and sets up the four external models required by --distortion:
+# Downloads and sets up the external models required by --distortion:
 #   bigvgan      nvidia/bigvgan_v2_24khz_100band_256x
 #   wavtokenizer novateur/WavTokenizer  (code + checkpoint)
 #   facodec      amphion/naturalspeech3_facodec (code from Amphion + weights)
 #   hifigan      speechbrain/tts-hifigan-libritts-16kHz
+#   stok         OpenMOSS-Team/SpeechTokenizer (config + weights)
+#   vocos        charactr/vocos-mel-24khz (pip package + cached weights)
 #
 # Usage:
 #   bash setup_third_party.sh          # runs in the repo root
@@ -29,7 +31,7 @@ mkdir -p "$THIRD_PARTY"
 # 1. BigVGAN
 # ──────────────────────────────────────────────────────────────────────────────
 echo "────────────────────────────────────"
-echo "[1/4] BigVGAN"
+echo "[1/6] BigVGAN"
 echo "────────────────────────────────────"
 
 BIGVGAN_DIR="$THIRD_PARTY/BigVGAN"
@@ -94,7 +96,7 @@ echo ""
 # 2. WavTokenizer (code + checkpoint)
 # ──────────────────────────────────────────────────────────────────────────────
 echo "────────────────────────────────────"
-echo "[2/4] WavTokenizer"
+echo "[2/6] WavTokenizer"
 echo "────────────────────────────────────"
 
 WAVTOK_DIR="$THIRD_PARTY/WavTokenizer"
@@ -128,7 +130,7 @@ echo ""
 # 3. FACodec  (ns3_codec source from Amphion + pretrained weights)
 # ──────────────────────────────────────────────────────────────────────────────
 echo "────────────────────────────────────"
-echo "[3/4] FACodec"
+echo "[3/6] FACodec"
 echo "────────────────────────────────────"
 
 AMPHION_DIR="$THIRD_PARTY/Amphion"
@@ -172,7 +174,7 @@ echo ""
 # 4. HiFi-GAN  (speechbrain auto-downloads; just pre-cache it here)
 # ──────────────────────────────────────────────────────────────────────────────
 echo "────────────────────────────────────"
-echo "[4/5] HiFi-GAN"
+echo "[4/6] HiFi-GAN"
 echo "────────────────────────────────────"
 
 HIFIGAN_DIR="$THIRD_PARTY/hifigan"
@@ -197,7 +199,7 @@ echo ""
 # 5. SpeechTokenizer  (config + pretrained weights)
 # ──────────────────────────────────────────────────────────────────────────────
 echo "────────────────────────────────────"
-echo "[5/5] SpeechTokenizer"
+echo "[5/6] SpeechTokenizer"
 echo "────────────────────────────────────"
 
 STOK_DIR="$THIRD_PARTY/SpeechTokenizer"
@@ -231,6 +233,33 @@ else
 fi
 
 echo ""
+
+# ──────────────────────────────────────────────────────────────────────────────
+# 6. Vocos  (pip package; pre-cache the pretrained weights here)
+# ──────────────────────────────────────────────────────────────────────────────
+echo "────────────────────────────────────"
+echo "[6/6] Vocos"
+echo "────────────────────────────────────"
+
+VOCOS_DIR="$THIRD_PARTY/vocos"
+VOCOS_MARKER="$VOCOS_DIR/.cached"
+if [ ! -f "$VOCOS_MARKER" ]; then
+    echo "  Pre-caching Vocos weights (charactr/vocos-mel-24khz)..."
+    # pert_vocos() loads the model via Vocos.from_pretrained, which pulls the
+    # weights into the HuggingFace cache. Instantiating it once here primes that
+    # cache so the distortion runs offline afterwards.
+    $PYTHON - <<PYEOF
+from vocos import Vocos
+Vocos.from_pretrained("charactr/vocos-mel-24khz")
+print("  Vocos weights cached.")
+PYEOF
+    mkdir -p "$VOCOS_DIR"
+    touch "$VOCOS_MARKER"
+else
+    echo "  Vocos already cached."
+fi
+
+echo ""
 echo "════════════════════════════════════"
 echo "All third-party models are ready."
 echo "  third_party/"
@@ -239,5 +268,6 @@ echo "  ├── WavTokenizer/     (+ checkpoint)"
 echo "  ├── Amphion/models/codec/ns3_codec/"
 echo "  ├── facodec_weights/"
 echo "  ├── hifigan/"
-echo "  └── SpeechTokenizer/"
+echo "  ├── SpeechTokenizer/"
+echo "  └── vocos/            (weights in HuggingFace cache)"
 echo "════════════════════════════════════"

@@ -520,7 +520,7 @@ def evaluate_one(
 
             clean_wav = load_waveform(file_path, args.sample_rate, device)
             clean_batch = ensure_batch_channel(clean_wav)   # (1, 1, T)
-            clean_eval = clean_wav.squeeze(0)               # (1, T)
+            clean_eval = clean_wav                          # (1, T)
 
             if condition == "no_watermark":
                 # No watermark embedding; distortion is applied to the clean signal.
@@ -666,7 +666,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--output-class", type=int, default=12,
-        help="Number of source-tracing classes (default: 12).",
+        help="Collaborator / watermark label-space dimension, matching the trained "
+             "source_tracing_num_labels (default: 12).",
     )
     parser.add_argument(
         "--n-per-class", type=int, default=None,

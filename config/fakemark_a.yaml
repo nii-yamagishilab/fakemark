@@ -4,7 +4,7 @@ base_path: !PLACEHOLDER
 exp_name: exp
 data_folder: !ref <base_path>/Data
 protocol_folder: ./protocols
-collaborator_out_class: 6
+collaborator_out_class: 12
 # Path to save exp log and checkpoints
 output_folder: !ref <base_path>/Log/exps-watermark/exp_<exp_name>
 # where checkpoints will be saved
@@ -39,7 +39,7 @@ ckpt_interval_hours: 23
 # whether use true logit for collab target
 # or use random int as collob target
 use_logit: True
-emb_size: 256
+emb_size: 128
 
 ################################
 # Dynamic batching settings #
@@ -55,7 +55,7 @@ dynamic_batch_sampler_train:
 # Watermarking #
 ################################
 watermark_backend: seanet
-source_tracing_num_labels: 24 
+source_tracing_num_labels: 12
 
 ################################
 # Network Hyperparameters #

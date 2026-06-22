@@ -52,7 +52,14 @@ conda activate fakemark
 conda install -c conda-forge ffmpeg -y
 pip install --upgrade pip
 pip install -r requirements.txt
+# audiocraft is installed separately with --no-deps: audiocraft==1.1.0 hard-pins
+# av==11.0.0, which has no prebuilt wheel and fails to build against modern ffmpeg.
+# Its required runtime deps are already in requirements.txt, so --no-deps is safe.
+pip install --no-deps audiocraft==1.1.0
 ```
+
+> **Note:** `ffmpeg` must be on your `PATH` (the `conda install` above handles this).
+> Training's audio-effect augmentation and `pydub` shell out to the `ffmpeg` binary.
 
 ### Checkpoints
 
@@ -160,11 +167,16 @@ Protocol CSV files are included under [`protocols/`](protocols/):
 |------|-------|------|-------------|
 | `protocols/train.csv` | Train | 10 000 | Training utterances drawn from MLAAD v5 |
 | `protocols/valid.csv` | Validation | 1 000 | Validation utterances for checkpoint selection |
-| `protocols/test.csv` | Test | 29 100 | Balanced evaluation set used for all reported results |
+| `protocols/test.csv` | Test | 29 100 | Full evaluation set |
+| `protocols/train_balanced.csv` | Train | 3 156 | ID-balanced training split |
+| `protocols/valid_balanced.csv` | Validation | 1 000 | ID-balanced validation split |
+| `protocols/test_balanced.csv` | Test | 13 591 | ID-balanced evaluation set used by the eval examples |
 
 Each CSV follows SpeechBrain format with `$ROOT/`-prefixed audio paths.
 Set `--root-path` (evaluation) or configure `data_folder` (training) to the directory
-that replaces the `$ROOT` prefix at runtime.
+that replaces the `$ROOT/` prefix at runtime. For evaluation, include a trailing
+slash (e.g. `--root-path /path/to/Data/`), since the literal `$ROOT/` — slash
+included — is what gets replaced.
 
 The full column schema is:
 
@@ -191,21 +203,21 @@ The full column schema is:
 | Sample rate | `16 000 Hz` | Target waveform sample rate; inputs are resampled if needed |
 | Max batch length | `40` | Max total duration of a batch during training |
 | Epochs | `100` | Total training epochs over the dataset |
-| Learning rate | `1e-5` | Initial learning |
-| Warmup steps | `1 000` | Linear LR warm-up before the main schedule |
-| Message warmup | `2 000` | Steps before the watermark message loss is activated |
-| Validation step | `2 000` | Frequency (in steps) at which validation is run and checkpoints are saved |
-| Optimizer step limit | `24 000` | Training stops at this step |
-| Number of labels | `12` | Number of source TTS systems (attribution classes) |
+| Learning rate | `1e-4` | Initial learning rate |
+| Warmup steps | `2 000` | Linear LR warm-up before the main schedule |
+| Message warmup | `0` (FakeMarkA) / `2 000` (FakeMarkT) | Steps before the watermark message loss is activated |
+| Validation step | `1 000` | Frequency (in steps) at which validation is run and checkpoints are saved |
+| Optimizer step limit | `50 000` | Training stops at this step |
+| Number of labels | `12` | Collaborator / watermark label-space dimension (`source_tracing_num_labels`) |
 
-Loss weights: `λ_g_col = 0.5`, `λ_col = 1.0`, `λ_sc = 1.0`, `λ_ssn = 1.0`,
-`λ_gen = 1.0`, `λ_loud = 10.0`, `λ_l1 = 0.1`, `λ_feat_match = 1.0`,
-`λ_l1_spec = 1.0`.
+Loss weights: `λ_g_col = 10.0`, `λ_col = 10.0`, `λ_sc = 1.0`, `λ_ssn = 1.0`,
+`λ_gen = 1.0` (FakeMarkA) / `7.0` (FakeMarkT), `λ_loud = 10.0`, `λ_l1 = 0.1`,
+`λ_feat_match = 1.0`, `λ_l1_spec = 1.0`.
 
 Architecture defaults:
 
-- **FakeMarkA**: `watermark_backend=seanet`, `emb_size=256`, `n_filters=32`, `n_residual_layers=1`
-- **FakeMarkT**: `watermark_backend=timbre`, `hidden_dim=64`, `layers_CE=3`, `layers_EM=4`
+- **FakeMarkA**: `watermark_backend=seanet`, `emb_size=128`, `n_filters=32`, `n_residual_layers=1`
+- **FakeMarkT**: `watermark_backend=timbre`, `hidden_dim=64`, `layers_CE=4`, `layers_EM=5`
 
 ---
 
@@ -220,7 +232,7 @@ The maintained evaluation scripts are:
 
 ### Prerequisites — Third-party Vocoder and Codec Models
 
-Several distortion operators (`vocos`, `bigvgan`, `hifigan`, `stok`, `wav_tokenizer`, `facodec`)
+Several distortion operators (`vocos`, `bigvgan`, `hifigan`, `stok`, `wavtokenizer`, `facodec`)
 depend on external models that are not bundled in this repository.
 Run the setup script once after installation to clone the required repos and
 download the pretrained weights:
@@ -234,12 +246,13 @@ The script sets up the following under `third_party/`:
 | Model | Source | Used by distortion |
 |-------|--------|--------------------|
 | BigVGAN v2 | `nvidia/bigvgan_v2_24khz_100band_256x` | `bigvgan` |
-| WavTokenizer | `novateur/WavTokenizer` | `wav_tokenizer` |
+| WavTokenizer | `novateur/WavTokenizer` | `wavtokenizer` |
 | FACodec | `amphion/naturalspeech3_facodec` | `facodec` |
 | HiFi-GAN | `speechbrain/tts-hifigan-libritts-16kHz` | `hifigan` |
 | SpeechTokenizer | `OpenMOSS-Team/SpeechTokenizer` | `stok` |
+| Vocos | `charactr/vocos-mel-24khz` | `vocos` |
 
-The `none`, `pitch`, `speed`, `noise`, and `gaussian` distortions do not
+The `none`, `pitch`, `speed`, and `noise` distortions do not
 require any third-party models and can be run immediately after installation.
 
 ### Supported Systems
@@ -259,9 +272,9 @@ require any third-party models and can be run immediately after installation.
 |----------|------|
 | No distortion | `none` |
 | Vocoder resynthesis | `vocos`, `bigvgan`, `hifigan` |
-| Neural codec | `stok` (SpeechTokenizer), `wav_tokenizer`, `facodec` |
-| Signal processing | `pitch`, `speed`, `noise` (MUSAN), `gaussian` |
-| Watermark-targeted | `watermark_overwrite` |
+| Neural codec | `stok` (SpeechTokenizer), `wavtokenizer`, `facodec` |
+| Signal processing | `pitch`, `speed`, `noise` (MUSAN) |
+| Watermark-targeted | `overwrite` |
 
 Use `--distortion all` to run every supported distortion in one pass.
 
@@ -269,8 +282,8 @@ Use `--distortion all` to run every supported distortion in one pass.
 
 ```bash
 python eval/eval_attribution.py \
-  --protocol /path/to/protocols/test_balanced.csv \
-  --root-path /path/to/Data \
+  --protocol protocols/test_balanced.csv \
+  --root-path /path/to/Data/ \
   --output results/table1.csv \
   --system FakeMarkA FakeMarkT MMS-300M ResNet34 AudioSeal Timbre \
   --distortion none vocos bigvgan \
@@ -301,6 +314,9 @@ wavs/
 
 ```bash
 python eval/eval_table4.py \
+  --protocol-indomain protocols/test_balanced.csv \
+  --protocol-crossdomain /path/to/asvspoof5_timit_test.csv \
+  --root-path /path/to/Data/ \
   --fakemarka-exp-dir checkpoints/FakeMarkA \
   --fakemarkt-exp-dir checkpoints/FakeMarkT \
   --ssl-checkpoint facebook/mms-300m \
@@ -308,6 +324,10 @@ python eval/eval_table4.py \
   --distortion none vocos bigvgan \
   --wav-output-dir wavs/
 ```
+
+`--protocol-indomain`, `--protocol-crossdomain`, and `--root-path` are all
+required. The in-domain protocol is the MLAAD v5 balanced test split; the
+cross-domain protocol is the ASVspoof5 + TIMIT-TTS split.
 
 ### Output Files
 

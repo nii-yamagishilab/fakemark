@@ -5,9 +5,24 @@ torchaudio
 # Speech processing
 speechbrain
 audioseal
-audiocraft
 speechtokenizer
 vocos
+# NOTE: audiocraft itself is installed separately with --no-deps (see README),
+# because audiocraft==1.1.0 hard-pins av==11.0.0, which has no wheel for modern
+# Python/ffmpeg and fails to build from source. Its runtime dependencies that
+# FakeMark actually uses (perturbations/audio_effects.py ->
+# audiocraft.solvers.compression) are listed in the section below instead.
+
+# audiocraft runtime dependencies (installed here so audiocraft can run with
+# --no-deps). av>=12 ships prebuilt wheels; av==11 (audiocraft's pin) does not.
+av>=12
+xformers
+demucs
+flashy
+hydra-core
+hydra-colorlog
+num2words
+torchmetrics
 
 # Hugging Face ecosystem
 transformers

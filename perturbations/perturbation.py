@@ -35,50 +35,6 @@ _FACODEC_PATH = str(_THIRD_PARTY / "Amphion" / "models" / "codec")
 _FACODEC_CKPT_DIR = str(_THIRD_PARTY / "facodec_weights")
 _HIFIGAN_SAVEDIR = str(_THIRD_PARTY / "hifigan")
 
-def pert_gaussian(
-    waveform: torch.Tensor,
-    snr_range=(10, 20),
-    snr: int = None,
-):
-    """
-    Add Gaussian noise to the waveform at a given SNR.
-
-    Arguments
-    ---------
-    waveform : torch.Tensor
-        Input waveform of shape [1, T] or [B, T].
-    snr_range : tuple (float, float)
-        Range of SNR (in dB) to randomly sample from.
-    snr : int, optional
-        If given, fixes the SNR instead of sampling from snr_range.
-
-    Returns
-    -------
-    pert_waveform : torch.Tensor
-        Waveform with added Gaussian noise, same shape as input.
-    """
-
-    # pick target SNR
-    target_snr = random.uniform(*snr_range)
-    if snr is not None:
-        target_snr = snr
-
-    # ensure [B, T] shape
-    if waveform.dim() == 1:
-        waveform = waveform.unsqueeze(0)
-
-    signal_power = waveform.pow(2).mean(dim=-1, keepdim=True)  # [B, 1]
-    snr_linear = 10 ** (target_snr / 10)
-
-    # compute noise power
-    noise_power = signal_power / snr_linear
-    noise_std = torch.sqrt(noise_power)
-
-    # generate Gaussian noise
-    noise = torch.randn_like(waveform) * noise_std
-
-    return waveform + noise
-
 musan_path = "/path/to/your/MUSAN/musan/"
 # Optional MUSAN assets can be configured externally when needed.
 musan_music_files = glob.glob(os.path.join(musan_path, "music/*/*.wav"))

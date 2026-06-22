@@ -563,8 +563,12 @@ def load_watermark_bundle(
         timbre_kwargs["checkpoint_path"] = args.timbre_ckpt
     timbre = TimbreWrapper(**timbre_kwargs)
 
+    # AudioSeal / Timbre assign one watermark message per real attack class.
+    # This is governed by the number of attribution labels (len(id_to_label)),
+    # not the collaborator's output dimension (args.output_class), so the message
+    # count stays within the nbits budget regardless of the collaborator size.
     attack_to_message = build_attack_message_mapping(
-        num_attacks=args.output_class + 1,
+        num_attacks=len(id_to_label),
         seed=args.message_seed,
         nbits=args.nbits,
     )
@@ -889,7 +893,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--output-class", type=int, default=12,
-        help="Number of source-tracing classes (default: 12).",
+        help="Collaborator / watermark label-space dimension, matching the trained "
+             "source_tracing_num_labels (default: 12).",
     )
     parser.add_argument(
         "--n-per-class", type=int, default=None,
