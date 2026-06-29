@@ -230,6 +230,11 @@ The maintained evaluation scripts are:
 | [`eval/eval_attribution.py`](eval/eval_attribution.py) | Tables 1 & 2 — attribution accuracy across systems and distortions |
 | [`eval/eval_table4.py`](eval/eval_table4.py) | Table 4 — watermarked vs. no-watermark ablation |
 
+Evaluation is run on the balanced test split [`protocols/test_balanced.csv`](protocols/test_balanced.csv).
+Both scripts subsample it to `--n-per-class` files per attribution class (deterministic, seed 42);
+this defaults to **300**, matching the balanced evaluation protocol. Pass `--n-per-class 0` to
+evaluate on the full split instead.
+
 ### Prerequisites — Third-party Vocoder and Codec Models
 
 Several distortion operators (`vocos`, `bigvgan`, `hifigan`, `stok`, `wavtokenizer`, `facodec`)

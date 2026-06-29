@@ -163,7 +163,7 @@ def balance_protocol(
     df: pd.DataFrame, n_per_class: Optional[int]
 ) -> pd.DataFrame:
     """Subsample to ``n_per_class`` files per attack class, deterministically."""
-    if n_per_class is None:
+    if not n_per_class or n_per_class < 0:
         return df
     df = df.copy()
     df["_attack_id"] = df["Attack"].map(model_to_id).fillna(-1).astype(int)
@@ -670,8 +670,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
              "source_tracing_num_labels (default: 12).",
     )
     parser.add_argument(
-        "--n-per-class", type=int, default=None,
-        help="Files per class for balanced evaluation. Defaults to using all available files.",
+        "--n-per-class", type=int, default=300,
+        help="Files per attribution class for balanced evaluation (default: 300, "
+             "matching the balanced test protocol). Pass 0 to use all available files.",
     )
 
     # --- Condition and distortion selection ---
