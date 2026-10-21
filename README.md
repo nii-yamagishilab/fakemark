@@ -3,15 +3,14 @@
 <!-- markdownlint-disable no-duplicate-header -->
 
 <div align="center">
-  <h1>FakeMark</h1>
-  <p><strong>Deepfake speech attribution via watermarked artifacts</strong></p>
+  <h1>FakeMark: Deepfake speech attribution via watermarked artifacts</p>
 </div>
 
 <div align="center" style="line-height: 1;">
   <a href="./LICENSE"><img alt="Code License"
     src="https://img.shields.io/badge/Code_License-BSD%203--Clause-f5de53?&color=f5de53"/></a>
-  <a href="./requirements.txt"><img alt="Python"
-    src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white"/></a>
+  <a href="https://huggingface.co/nii-yamagishilab/fakemark"><img alt="Hugging Face"
+    src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-NII Yamagishi Lab-ffc107?color=ffc107&logoColor=white"/></a>
   <a href="https://arxiv.org/abs/2510.12042"><img alt="arXiv"
     src="https://img.shields.io/badge/arXiv-2510.12042-b31b1b?logo=arxiv&logoColor=white"/></a>
 </div>
@@ -50,16 +49,13 @@ Both share a unified **collaborator** classifier (MMS-300M) that performs attrib
 conda create -n fakemark python=3.10 -y
 conda activate fakemark
 conda install -c conda-forge ffmpeg -y
-pip install --upgrade pip
-pip install -r requirements.txt
+python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt
 # audiocraft is installed separately with --no-deps: audiocraft==1.1.0 hard-pins
 # av==11.0.0, which has no prebuilt wheel and fails to build against modern ffmpeg.
 # Its required runtime deps are already in requirements.txt, so --no-deps is safe.
-pip install --no-deps audiocraft==1.1.0
+python3 -m pip install --no-deps audiocraft==1.1.0
 ```
-
-> **Note:** `ffmpeg` must be on your `PATH` (the `conda install` above handles this).
-> Training's audio-effect augmentation and `pydub` shell out to the `ffmpeg` binary.
 
 ### Checkpoints
 
