@@ -389,10 +389,12 @@ See [`LICENSE`](LICENSE).
 If you find this repository useful, please consider citing:
 
 ```bibtex
-@inproceedings{fakemark,
-  title     = {FakeMark: Deepfake Speech Attribution With Watermarked Artifacts},
-  author    = {Ge, Wanying and Wang, Xin and Yamagishi, Junichi},
-  booktitle = {The Authenticity \& Provenance in the Age of AI Workshop},
-  year      = {2026}
+@InProceedings{Ge_2026_CVPR,
+    author    = {Ge, Wanying and Wang, Xin and Yamagishi, Junichi},
+    title     = {FakeMark: Deepfake Speech Attribution With Watermarked Artifacts},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
+    month     = {June},
+    year      = {2026},
+    pages     = {10687-10697}
 }
 ```
